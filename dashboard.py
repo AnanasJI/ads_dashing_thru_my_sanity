@@ -4,8 +4,10 @@ import dash
 from dash import dcc, html
 import plotly.express as px
 import sys
+import os
 
 
+# TODO: change so that can parse multiple datasets for each country
 class Label(Enum):
     """
     Enummeration class representing the possible labels from the classifier.
@@ -14,6 +16,18 @@ class Label(Enum):
     POSITIVE = "POSITIVE"
     NEGATIVE = "NEGATIVE"
     NEUTRAL = "NEUTRAL"
+
+
+class Country(Enum):
+    """
+    Enummeration class representing countries by their iso-alpha 3 codes.
+    """
+
+    CAN = "Canada"
+    GBR = "UK"
+    USA = "USA"
+    NZL = "New Zeland"
+    AUS = "Australia"
 
 
 def get_window_sentiment(df: pd.DataFrame, threshold: float = 0.70) -> float:
@@ -67,16 +81,15 @@ def get_windowed_tweets(
     return tweets.query(f"{year_query} and {month_query} and {day_query}")
 
 
-def aggregate_sentiment_data(data: pd.DataFrame) -> pd.DataFrame:
+def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> pd.DataFrame:
     """
     Input:
         data: dataframe containing all data.
+        country: Country enummerator corresponding to the data.
 
     Output:
         An dataframe of all the data, aggregated by weekly sentiment averages.
     """
-    # TODO: change to accept data not just for canada
-
     # create empty dataframe
     aggregated_data = pd.DataFrame(
         columns=["week", "country", "av_sentiment", "iso_alpha"]
@@ -95,30 +108,66 @@ def aggregate_sentiment_data(data: pd.DataFrame) -> pd.DataFrame:
         score = get_window_sentiment(window_df)
         aggregated_data.loc[index] = [
             week.strftime(time_string_format),
-            "Canada",
+            country.value,
             score,
-            "CAN",
+            country.name,
         ]
         index += 1
         week = next_week
 
-    return aggregated_data.set_index("week")
+    return aggregated_data
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("data/CAN_data.csv").iloc[:, 1:]
-    data["created_at"] = pd.to_datetime(data["created_at"])
+    directory = os.fsencode("data")
 
-    aggregated_data = aggregate_sentiment_data(data)
+    # create empty dataframe
+    aggregated_data = pd.DataFrame(
+        columns=["week", "country", "av_sentiment", "iso_alpha"]
+    )
+    aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+
+        # only process .csv files
+        if filename.endswith(".csv"):
+            # read csv file into dataframe and removes repeat id column
+            data = pd.read_csv(os.path.join(os.fsdecode(directory), filename)).iloc[
+                :, 1:
+            ]
+            data["created_at"] = pd.to_datetime(data["created_at"])
+
+            # determine country of dataset
+            country = None
+            if filename.startswith(Country.AUS.name):
+                country = Country.AUS
+            elif filename.startswith(Country.CAN.name):
+                country = Country.CAN
+            elif filename.startswith(Country.GBR.name):
+                country = Country.GBR
+            elif filename.startswith(Country.NZL.name):
+                country = Country.NZL
+            elif filename.startswith(Country.USA.name):
+                country = Country.USA
+            else:
+                continue
+
+            aggregated_data = pd.concat(
+                [aggregated_data, aggregate_sentiment_data(data, country)],
+                ignore_index=True,
+            )
 
     # create graph
+    # NOTE: choropleth uses iso alpha 3 country codes
     fig = px.choropleth(
         aggregated_data,
         locations="iso_alpha",
-        color="av_sentiment",
         hover_name="country",
-        animation_frame=aggregated_data.index,
-        color_continuous_scale="Plasma",
+        animation_frame="week",
+        color="av_sentiment",
+        color_continuous_scale=px.colors.diverging.RdBu,
+        color_continuous_midpoint=0,
         range_color=(-1, 1),
         height=600,
     )

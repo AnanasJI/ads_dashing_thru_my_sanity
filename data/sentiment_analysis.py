@@ -13,9 +13,8 @@ for file in os.listdir(directory):
 
     # only process .csv files
     if filename.endswith(".csv"):
-        # read csv file into dataframe
+        # read csv file into dataframe and removes repeat id column
         data = pd.read_csv(os.path.join(os.fsdecode(directory), filename)).iloc[:, 1:]
-        data["created_at"] = pd.to_datetime(data["created_at"])
 
         # analyse sentiment of tweets
         tweets = data["text"].values.tolist()
