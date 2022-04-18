@@ -5,9 +5,11 @@ from dash import dcc, html
 import plotly.express as px
 import sys
 import os
+import csv
 
 
-# TODO: change so that can parse multiple datasets for each country
+# TODO: change so that does not grow aggregated dataframe, grow list and
+# convert full list to dataframe
 class Label(Enum):
     """
     Enummeration class representing the possible labels from the classifier.
@@ -84,7 +86,7 @@ def get_windowed_tweets(
 def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> pd.DataFrame:
     """
     Input:
-        data: dataframe containing all data.
+        data: dataframe containing all data for one country.
         country: Country enummerator corresponding to the data.
 
     Output:
@@ -121,40 +123,61 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> pd.DataFra
 if __name__ == "__main__":
     directory = os.fsencode("data")
 
-    # create empty dataframe
-    aggregated_data = pd.DataFrame(
-        columns=["week", "country", "av_sentiment", "iso_alpha"]
-    )
-    aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
+    # dictionary to sort loaded datasets by country
+    data_by_country = {
+        Country.AUS: [],
+        Country.CAN: [],
+        Country.GBR: [],
+        Country.NZL: [],
+        Country.USA: [],
+    }
 
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
 
         # only process .csv files
         if filename.endswith(".csv"):
-            # read csv file into dataframe and removes repeat id column
-            data = pd.read_csv(os.path.join(os.fsdecode(directory), filename)).iloc[
-                :, 1:
-            ]
-            data["created_at"] = pd.to_datetime(data["created_at"])
+            with open(os.path.join(os.fsdecode(directory), filename), "r") as f:
+                # read csv file to list
+                data = list(csv.reader(f))
+
+                # split headers/column names
+                column_names, data = data[0], data[1:]
 
             # determine country of dataset
             country = None
             if filename.startswith(Country.AUS.name):
-                country = Country.AUS
+                data_by_country[Country.AUS] += data
             elif filename.startswith(Country.CAN.name):
-                country = Country.CAN
+                data_by_country[Country.CAN] += data
             elif filename.startswith(Country.GBR.name):
-                country = Country.GBR
+                data_by_country[Country.GBR] += data
             elif filename.startswith(Country.NZL.name):
-                country = Country.NZL
+                data_by_country[Country.NZL] += data
             elif filename.startswith(Country.USA.name):
-                country = Country.USA
+                data_by_country[Country.USA] += data
             else:
                 continue
 
+    # create empty dataframe for aggregated data (used for graph)
+    aggregated_data = pd.DataFrame(
+        columns=["week", "country", "av_sentiment", "iso_alpha"]
+    )
+    aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
+
+    for country, data in data_by_country.items():
+        if data:
+            # create dataframe from data
+            # NOTE: first column is repeated index, use iloc to remove
+            df = pd.DataFrame.from_records(data, columns=column_names).iloc[:, 1:]
+
+            # convert columns to correct data types
+            df["created_at"] = pd.to_datetime(df["created_at"])
+            df["confidence"] = df["confidence"].astype(float)
+
+            # aggregate data
             aggregated_data = pd.concat(
-                [aggregated_data, aggregate_sentiment_data(data, country)],
+                [aggregated_data, aggregate_sentiment_data(df, country)],
                 ignore_index=True,
             )
 
