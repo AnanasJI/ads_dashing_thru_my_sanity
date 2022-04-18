@@ -1,3 +1,4 @@
+from pydoc import classname
 from typing import List
 import pandas as pd
 from enum import Enum
@@ -117,7 +118,7 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
     return aggregated_data
 
 
-if __name__ == "__main__":
+def create_world_map():
     # dictionary to sort loaded datasets by country
     data_by_country = {
         Country.AUS: [],
@@ -194,9 +195,31 @@ if __name__ == "__main__":
         range_color=(-1, 1),
         height=600,
     )
+    return fig
 
-    # create web app
-    app = dash.Dash()
-    app.layout = html.Div([dcc.Graph(id="sentiment_over_time", figure=fig)])
 
+# create web app
+external_stylesheets = [
+    {
+        "href": "https://fonts.googleapis.com/css2?"
+        "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    },
+]
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+fig = create_world_map()
+
+app.layout = html.Div(
+    children=[
+        html.Div(
+            children=[html.H1(children="Dashboard", className="header-title")],
+            className="header",
+        ),
+        html.Div(children=dcc.Graph(id="world-map", figure=fig), className="card"),
+    ]
+)
+
+if __name__ == "__main__":
     app.run_server(debug=True)
