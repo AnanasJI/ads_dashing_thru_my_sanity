@@ -30,10 +30,12 @@ Scripts assume that there are no repeat tweets recorded in the data or across al
 
 Then run the (sentiment_analysis.py) script from inside the data directory (otherwise it will not work). This should output a processed data csv file into the data directory.
 
-That processed file in the data directory is what should be used by the (dashboard.py) script. It will be named ("processed\_" + original_filename.csv).
+That processed file in the data directory is what should be used by the (app.py) script. It will be named ("processed\_" + original_filename.csv).
 
 # Running dashboard
 
-Inside the pipenv environment, run (python dashboard.py).
+Inside the pipenv environment, run (python app.py).
 
 Make sure there is processed data (refer to previous section) in the data directory before running.
+
+You do not need to run or edit the (module_data.py) or (module_graph.py) script to run the dashboard.
