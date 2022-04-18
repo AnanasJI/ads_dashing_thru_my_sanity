@@ -28,7 +28,7 @@ Multiple data files can be added for one country.
 
 Scripts assume that there are no repeat tweets recorded in the data or across all the datasets.
 
-Then run the (sentiment_analysis.py) script that should output a processed data csv file into the data directory.
+Then run the (sentiment_analysis.py) script from inside the data directory (otherwise it will not work). This should output a processed data csv file into the data directory.
 
 That processed file in the data directory is what should be used by the (dashboard.py) script. It will be named ("processed\_" + original_filename.csv).
 

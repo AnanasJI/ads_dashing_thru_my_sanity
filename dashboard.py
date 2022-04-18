@@ -130,6 +130,9 @@ if __name__ == "__main__":
     # set directory to read in data from
     directory = os.fsencode("data")
 
+    # set prefix of processed data filenames
+    filename_prefix = "processed_"
+
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
 
@@ -144,15 +147,15 @@ if __name__ == "__main__":
 
             # determine country of dataset
             country = None
-            if filename.startswith(Country.AUS.name):
+            if filename.startswith(filename_prefix + Country.AUS.name):
                 data_by_country[Country.AUS] += data
-            elif filename.startswith(Country.CAN.name):
+            elif filename.startswith(filename_prefix + Country.CAN.name):
                 data_by_country[Country.CAN] += data
-            elif filename.startswith(Country.GBR.name):
+            elif filename.startswith(filename_prefix + Country.GBR.name):
                 data_by_country[Country.GBR] += data
-            elif filename.startswith(Country.NZL.name):
+            elif filename.startswith(filename_prefix + Country.NZL.name):
                 data_by_country[Country.NZL] += data
-            elif filename.startswith(Country.USA.name):
+            elif filename.startswith(filename_prefix + Country.USA.name):
                 data_by_country[Country.USA] += data
             else:
                 continue
