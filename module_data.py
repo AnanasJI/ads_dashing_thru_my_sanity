@@ -107,6 +107,7 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
                 country.value,
                 score,
                 country.name,
+                window_df.shape[0],
             ]
         )
         week = next_week
@@ -178,7 +179,8 @@ def get_aggregated_data() -> pd.DataFrame:
 
     # create empty dataframe for aggregated data (used for graph)
     aggregated_data = pd.DataFrame.from_records(
-        aggregated_data_list, columns=["week", "country", "av_sentiment", "iso_alpha"]
+        aggregated_data_list,
+        columns=["week", "country", "av_sentiment", "iso_alpha", "tweet_counts"],
     )
     aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
 

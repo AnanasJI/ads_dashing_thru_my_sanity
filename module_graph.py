@@ -9,7 +9,13 @@ graph_world_map = px.choropleth(
     aggregated_data,
     locations="iso_alpha",
     hover_name="country",
-    hover_data={"country": False, "week": True, "av_sentiment": ":.2f"},
+    hover_data={
+        "country": False,
+        "week": True,
+        "iso_alpha": False,
+        "av_sentiment": ":.2f",
+        "tweet_counts": True,
+    },
     animation_frame="week",
     color="av_sentiment",
     color_continuous_scale=px.colors.diverging.RdBu,
@@ -25,5 +31,5 @@ graph_sentiment_timeline = px.line(
     title="average sentiment over time",
     color="country",
     hover_name="country",
-    hover_data={"country": False, "av_sentiment": ":.2f"},
+    hover_data={"country": False, "av_sentiment": ":.2f", "tweet_counts": True},
 )
