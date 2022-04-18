@@ -1,10 +1,6 @@
-from pydoc import classname
 from typing import List
 import pandas as pd
 from enum import Enum
-import dash
-from dash import dcc, html
-import plotly.express as px
 import sys
 import os
 import csv
@@ -118,7 +114,11 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
     return aggregated_data
 
 
-def create_world_map():
+def get_aggregated_data() -> pd.DataFrame:
+    """
+    Output:
+        A dataframe of all the countries data, aggregated by week.
+    """
     # dictionary to sort loaded datasets by country
     data_by_country = {
         Country.AUS: [],
@@ -182,44 +182,4 @@ def create_world_map():
     )
     aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
 
-    # create graph
-    # NOTE: choropleth uses iso alpha 3 country codes
-    fig = px.choropleth(
-        aggregated_data,
-        locations="iso_alpha",
-        hover_name="country",
-        animation_frame="week",
-        color="av_sentiment",
-        color_continuous_scale=px.colors.diverging.RdBu,
-        color_continuous_midpoint=0,
-        range_color=(-1, 1),
-        height=600,
-    )
-    return fig
-
-
-# create web app
-external_stylesheets = [
-    {
-        "href": "https://fonts.googleapis.com/css2?"
-        "family=Lato:wght@400;700&display=swap",
-        "rel": "stylesheet",
-    },
-]
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-fig = create_world_map()
-
-app.layout = html.Div(
-    children=[
-        html.Div(
-            children=[html.H1(children="Dashboard", className="header-title")],
-            className="header",
-        ),
-        html.Div(children=dcc.Graph(id="world-map", figure=fig), className="card"),
-    ]
-)
-
-if __name__ == "__main__":
-    app.run_server(debug=True)
+    return aggregated_data
