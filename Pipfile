@@ -8,6 +8,8 @@ dash = "*"
 pandas = "*"
 plotly = "*"
 plotly-express = "*"
+transformers = "*"
+torch = "*"
 
 [dev-packages]
 

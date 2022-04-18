@@ -7,12 +7,29 @@ import sys
 
 
 class Label(Enum):
+    """
+    Enummeration class representing the possible labels from the classifier.
+    """
+
     POSITIVE = "POSITIVE"
     NEGATIVE = "NEGATIVE"
     NEUTRAL = "NEUTRAL"
 
 
 def get_window_sentiment(df: pd.DataFrame, threshold: float = 0.70) -> float:
+    """
+    Inputs:
+        df: dataframe containing window of tweets to get a average sentiment
+            across
+        threshold: threshold for the confidence score (between 0 and 1) given
+            by the classifier of the assigned sentiment. tweets that do not
+            meet this threshold will not be conssidered in the calculation.
+
+    Output:
+        The average sentiment of the given dataframe. A score of -1 is
+            completely negative and a score of 1 is completely positive.
+            Type is float.
+    """
     pos_counts = 0
     neg_counts = 0
     neu_counts = 0
@@ -34,6 +51,16 @@ def get_window_sentiment(df: pd.DataFrame, threshold: float = 0.70) -> float:
 def get_windowed_tweets(
     tweets: pd.DataFrame, start_time: pd.Timestamp, end_time: pd.Timestamp
 ) -> pd.DataFrame:
+    """
+    Inputs:
+        tweets: dataframe of all tweets to query
+        start_time: pandas.Timestamp of the start of the time window
+            (included).
+        end_time: pandas.Timestamp of the end of the time window (excluded).
+
+    Output:
+        A dataframe containing only tweets within the inputted time window.
+    """
     year_query = f"{start_time.year} <= created_at.dt.year <= {end_time.year}"
     month_query = f"{start_time.month} <= created_at.dt.month <= {end_time.month}"
     day_query = f"{start_time.day} <= created_at.dt.day < {end_time.day}"
@@ -41,6 +68,15 @@ def get_windowed_tweets(
 
 
 def aggregate_sentiment_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Input:
+        data: dataframe containing all data.
+
+    Output:
+        An dataframe of all the data, aggregated by weekly sentiment averages.
+    """
+    # TODO: change to accept data not just for canada
+
     # create empty dataframe
     aggregated_data = pd.DataFrame(
         columns=["week", "country", "av_sentiment", "iso_alpha"]
