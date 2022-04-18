@@ -1,3 +1,4 @@
+from typing import List
 import pandas as pd
 from enum import Enum
 import dash
@@ -8,8 +9,6 @@ import os
 import csv
 
 
-# TODO: change so that does not grow aggregated dataframe, grow list and
-# convert full list to dataframe
 class Label(Enum):
     """
     Enummeration class representing the possible labels from the classifier.
@@ -83,19 +82,17 @@ def get_windowed_tweets(
     return tweets.query(f"{year_query} and {month_query} and {day_query}")
 
 
-def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> pd.DataFrame:
+def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
     """
     Input:
         data: dataframe containing all data for one country.
         country: Country enummerator corresponding to the data.
 
     Output:
-        An dataframe of all the data, aggregated by weekly sentiment averages.
+        A list of all the data, aggregated by weekly sentiment averages.
     """
-    # create empty dataframe
-    aggregated_data = pd.DataFrame(
-        columns=["week", "country", "av_sentiment", "iso_alpha"]
-    )
+    # create empty list
+    aggregated_data = []
 
     # format pd.Timestamp into a string
     time_string_format = "%Y-%m-%d"
@@ -103,26 +100,24 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> pd.DataFra
     # set start week to aggregate from
     week = pd.Timestamp("2019-01-01")
 
-    index = 0
     while week <= pd.Timestamp.today():
         next_week = week + pd.DateOffset(days=7)
         window_df = get_windowed_tweets(data, week, next_week)
         score = get_window_sentiment(window_df)
-        aggregated_data.loc[index] = [
-            week.strftime(time_string_format),
-            country.value,
-            score,
-            country.name,
-        ]
-        index += 1
+        aggregated_data.append(
+            [
+                week.strftime(time_string_format),
+                country.value,
+                score,
+                country.name,
+            ]
+        )
         week = next_week
 
     return aggregated_data
 
 
 if __name__ == "__main__":
-    directory = os.fsencode("data")
-
     # dictionary to sort loaded datasets by country
     data_by_country = {
         Country.AUS: [],
@@ -131,6 +126,9 @@ if __name__ == "__main__":
         Country.NZL: [],
         Country.USA: [],
     }
+
+    # set directory to read in data from
+    directory = os.fsencode("data")
 
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
@@ -159,11 +157,7 @@ if __name__ == "__main__":
             else:
                 continue
 
-    # create empty dataframe for aggregated data (used for graph)
-    aggregated_data = pd.DataFrame(
-        columns=["week", "country", "av_sentiment", "iso_alpha"]
-    )
-    aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
+    aggregated_data_list = []
 
     for country, data in data_by_country.items():
         if data:
@@ -176,10 +170,13 @@ if __name__ == "__main__":
             df["confidence"] = df["confidence"].astype(float)
 
             # aggregate data
-            aggregated_data = pd.concat(
-                [aggregated_data, aggregate_sentiment_data(df, country)],
-                ignore_index=True,
-            )
+            aggregated_data_list += aggregate_sentiment_data(df, country)
+
+    # create empty dataframe for aggregated data (used for graph)
+    aggregated_data = pd.DataFrame.from_records(
+        aggregated_data_list, columns=["week", "country", "av_sentiment", "iso_alpha"]
+    )
+    aggregated_data["av_sentiment"] = aggregated_data["av_sentiment"].astype(float)
 
     # create graph
     # NOTE: choropleth uses iso alpha 3 country codes
