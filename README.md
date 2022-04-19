@@ -2,7 +2,7 @@ help :'(
 
 # Using development environment (pipenv)
 
-Install pipenv (pip install pipenv).
+Install pipenv (pip install pipenv). It seems to be recommended to install using (pip install --user pipenv) so you don't do a system-wide installation.
 
 If there is a virtualenv issue when runing pipenv, make sure to uninstall all previous versions of virtualenv (installing virtualenv with sudo apt-get and pip can sometimes cause it to download two versions of virtualenv which confuses pipenv).
 
@@ -10,7 +10,7 @@ Run the environment with (pipenv shell) which should create a environment with a
 
 Pipenv will automatically install the dependencies and resolve subdependency issues.
 
-Therefore installing python modules, do so with pipenv (pipenv install module-name).
+Therefore when installing python modules, do so with pipenv (pipenv install module-name).
 
 # Development
 
