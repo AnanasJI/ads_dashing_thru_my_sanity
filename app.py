@@ -34,27 +34,35 @@ app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(
     children=[
+        # Header section
         html.Div(
             children=[html.H1(children="Dashboard", className="header-title")],
             className="header",
         ),
+        # Sentiment confidence threshold slider section
         html.Div(
             children=[
                 html.Div(
                     children=[
                         html.H3("Select sentiment anaylsis confidence threshold:"),
                         slider_threshold,
-                        html.Button("Update", id=id_button_threshold, n_clicks=0),
+                        html.Button(
+                            "Update",
+                            id=id_button_threshold,
+                            n_clicks=0,
+                            className="button",
+                        ),
                     ],
-                    className="wrapper",
+                    className="card-text",
                 )
             ],
-            className="card",
         ),
+        # World map section
         html.Div(
             children=dcc.Graph(id=id_graph_world_map, figure=graph_world_map),
             className="card",
         ),
+        # Sentiment timeline section
         html.Div(
             children=[
                 dcc.Graph(
@@ -68,6 +76,7 @@ app.layout = html.Div(
                             inline=True,
                             options=["x", "x unified", "closest"],
                             value="closest",
+                            className="radio-box",
                         ),
                     ],
                     className="card-text",
