@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import pandas as pd
 from enum import Enum
 import sys
@@ -28,7 +28,7 @@ class Country(Enum):
     AUS = "Australia"
 
 
-def get_window_sentiment(df: pd.DataFrame, threshold: float) -> float:
+def get_window_sentiment(df: pd.DataFrame, threshold: float) -> Tuple[float, float]:
     """
     Inputs:
         df: dataframe containing window of tweets to get a average sentiment
@@ -38,9 +38,16 @@ def get_window_sentiment(df: pd.DataFrame, threshold: float) -> float:
             meet this threshold will not be conssidered in the calculation.
 
     Output:
-        The average sentiment of the given dataframe. A score of -1 is
+        A tuple of the score and tweets_above_threshold.
+
+        score: average sentiment of the given dataframe. A score of -1 is
             completely negative and a score of 1 is completely positive.
             Type is float.
+
+        tweets_above_threshold: the calculation of the score only uses tweets
+            whose sentiment analysis confidence value is above the threshold.
+
+
     """
     pos_counts = 0
     neg_counts = 0
@@ -57,7 +64,9 @@ def get_window_sentiment(df: pd.DataFrame, threshold: float) -> float:
                 neu_counts += 1
             else:
                 sys.exit("Invalid label: " + label)
-    return (pos_counts - neg_counts) / max(1, (pos_counts + neg_counts + neu_counts))
+    tweets_above_threshold = pos_counts + neg_counts + neu_counts
+    score = (pos_counts - neg_counts) / max(1, tweets_above_threshold)
+    return score, tweets_above_threshold
 
 
 def get_windowed_tweets(
@@ -105,14 +114,14 @@ def aggregate_sentiment_data(
     while week <= pd.Timestamp.today():
         next_week = week + pd.DateOffset(days=7)
         window_df = get_windowed_tweets(data, week, next_week)
-        score = get_window_sentiment(window_df, threshold=threshold)
+        score, tweet_count = get_window_sentiment(window_df, threshold=threshold)
         aggregated_data.append(
             [
                 week.strftime(time_string_format),
                 country.value,
                 score,
                 country.name,
-                window_df.shape[0],
+                tweet_count,
             ]
         )
         week = next_week
