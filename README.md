@@ -14,7 +14,7 @@ Therefore when installing python modules, do so with pipenv (pipenv install modu
 
 # Development
 
-Use the ptyhon formatter tool (Black: https://github.com/psf/black).
+Use the ptyhon formatter tool (Black: https://github.com/psf/black). This automatically formats code (except too long lines).
 
 An installation and use guide for using black in vscode can be found here: https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0
 
@@ -39,3 +39,10 @@ Inside the pipenv environment, run (python app.py).
 Make sure there is processed data (refer to previous section) in the data directory before running.
 
 You do not need to run or edit the (module_data.py) or (module_graph.py) script to run the dashboard.
+
+NOTE: app runs in a development server and is not suppose to be used in production deployment.
+
+# Dashboard TODOs
+
+Add top 10 most common words found in tweets for each country (optional)
+Add opinion poll comparision

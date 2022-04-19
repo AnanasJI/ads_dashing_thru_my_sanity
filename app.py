@@ -1,6 +1,23 @@
 from dash import Dash, dcc, html, Input, Output, State, callback_context
-from module_graph import *
-from module_update_graphs import *
+from module_components import *
+from module_data import get_aggregated_data
+
+# constant values
+default_threshold = 0.7
+id_slider_threshold = "slider-threshold"
+id_graph_world_map = "graph-world_map"
+id_graph_sentiment_timeline = "graph-sentiment-timeline"
+id_button_threshold = "btn-update-threshold"
+id_selector_sentiment_timeline_hovermode = "selector-sentiment-timeline-hovermode"
+
+# get data aggregared by weeks
+aggregated_data = get_aggregated_data(threshold=default_threshold)
+
+# components
+# NOTE: sliders are dash components, graphs are plotly components
+slider_threshold = get_threshold_slider(id_slider_threshold, default_threshold)
+graph_world_map = update_world_graph_data(aggregated_data)
+graph_sentiment_timeline = update_sentiment_timeline_graph_data(aggregated_data)
 
 
 # create web app
@@ -27,7 +44,7 @@ app.layout = html.Div(
                     children=[
                         html.H3("Select sentiment anaylsis confidence threshold:"),
                         slider_threshold,
-                        html.Button("Update", id="btn-update-threshold", n_clicks=0),
+                        html.Button("Update", id=id_button_threshold, n_clicks=0),
                     ],
                     className="wrapper",
                 )
@@ -35,16 +52,19 @@ app.layout = html.Div(
             className="card",
         ),
         html.Div(
-            children=dcc.Graph(id="world-map", figure=graph_world_map), className="card"
+            children=dcc.Graph(id=id_graph_world_map, figure=graph_world_map),
+            className="card",
         ),
         html.Div(
             children=[
-                dcc.Graph(id="sentiment-timeline", figure=graph_sentiment_timeline),
+                dcc.Graph(
+                    id=id_graph_sentiment_timeline, figure=graph_sentiment_timeline
+                ),
                 html.Div(
                     children=[
                         html.H3("Select hovermode:"),
                         dcc.RadioItems(
-                            id="hovermode",
+                            id=id_selector_sentiment_timeline_hovermode,
                             inline=True,
                             options=["x", "x unified", "closest"],
                             value="closest",
@@ -61,23 +81,20 @@ app.layout = html.Div(
 
 
 @app.callback(
-    Output("world-map", "figure"),
-    Output("sentiment-timeline", "figure"),
-    State("btn-update-threshold", "id"),
-    Input("btn-update-threshold", "n_clicks"),
-    State("slider-threshold", "value"),
-    Input("hovermode", "value"),
+    Output(id_graph_world_map, "figure"),
+    Output(id_graph_sentiment_timeline, "figure"),
+    Input(id_button_threshold, "n_clicks"),
+    State(id_slider_threshold, "value"),
+    Input(id_selector_sentiment_timeline_hovermode, "value"),
 )
-def update_threshold_world_map(
-    update_threshold_btn_id: str,
-    uupdate_threshold_btn_n_clicks: int,
+def update(
+    update_threshold_btn_n_clicks: int,
     new_threshold: float,
-    sentiment_timeline_hovermode,
+    sentiment_timeline_hovermode: str,
 ):
     """
     Inputs:
-        update_threshold_btn_id: id of the update button.
-        uupdate_threshold_btn_n_clicks: number of times the update
+        update_threshold_btn_n_clicks: number of times the update
             button was clicked. It is not used in the function but
             it must be passed in as an input so that the function
             knows when to run. I.e. the function is run everytime the
@@ -87,49 +104,25 @@ def update_threshold_world_map(
             to use for the data (will only use sentiments with a
             confidence value higher than the threshold in the average
             sentiment calculation).
+        sentiment_timeline_hovermode: hovermode that the user can
+            select to display in the graph.
 
     Output:
-        A new world graph.
+        Updates all graphs in dashboard.
     """
     # get the id of the last button/component that was changed.
     changed_id = [p["prop_id"] for p in callback_context.triggered][0]
 
     # check if it was the update button that was changed.
-    if update_threshold_btn_id in changed_id:
-        # get new aggregated data
+    if id_button_threshold in changed_id:
         aggregated_data = get_aggregated_data(threshold=new_threshold)
-
-        # NOTE: choropleth uses iso alpha 3 country codes
-        new_graph_world_map = px.choropleth(
-            aggregated_data,
-            locations="iso_alpha",
-            hover_name="country",
-            hover_data={
-                "country": False,
-                "week": True,
-                "iso_alpha": False,
-                "av_sentiment": ":.2f",
-                "tweet_counts": True,
-            },
-            animation_frame="week",
-            color="av_sentiment",
-            color_continuous_scale=px.colors.diverging.RdBu,
-            color_continuous_midpoint=0,
-            range_color=(-1, 1),
-            height=600,
+        new_graph_world_map = update_world_graph_data(aggregated_data)
+        new_graph_sentiment_timeline = update_sentiment_timeline_graph_data(
+            aggregated_data
         )
 
-        new_graph_sentiment_timeline = px.line(
-            aggregated_data,
-            x="week",
-            y="av_sentiment",
-            title="average sentiment over time",
-            color="country",
-            hover_name="country",
-            hover_data={"country": False, "av_sentiment": ":.2f", "tweet_counts": True},
-        )
-    elif "hovermode" in changed_id:
-        new_graph_sentiment_timeline = update_hovermode_sentiment_timeline(
+    elif id_selector_sentiment_timeline_hovermode in changed_id:
+        new_graph_sentiment_timeline = update_sentiment_timeline_hovermode(
             graph_sentiment_timeline, sentiment_timeline_hovermode
         )
         new_graph_world_map = graph_world_map

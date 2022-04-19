@@ -122,11 +122,12 @@ def aggregate_sentiment_data(
 
 def get_aggregated_data(threshold: float = 0.7) -> pd.DataFrame:
     """
-    Output:
-        A dataframe of all the countries data, aggregated by week.
+    Input:
         threshold: threshold for the confidence score (between 0 and 1) given
             by the classifier of the assigned sentiment. tweets that do not
             meet this threshold will not be conssidered in the calculation.
+    Output:
+        A dataframe of all the countries data, aggregated by week.
     """
     # dictionary to sort loaded datasets by country
     data_by_country = {
