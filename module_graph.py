@@ -1,4 +1,5 @@
 import plotly.express as px
+from dash import dcc
 from module_data import get_aggregated_data
 
 
@@ -32,4 +33,14 @@ graph_sentiment_timeline = px.line(
     color="country",
     hover_name="country",
     hover_data={"country": False, "av_sentiment": ":.2f", "tweet_counts": True},
+)
+
+slider_threshold = dcc.Slider(
+    0.0,
+    1.0,
+    0.1,
+    value=0.5,
+    marks=None,
+    tooltip={"placement": "bottom", "always_visible": True},
+    id="slider-threshold",
 )

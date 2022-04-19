@@ -28,7 +28,7 @@ class Country(Enum):
     AUS = "Australia"
 
 
-def get_window_sentiment(df: pd.DataFrame, threshold: float = 0.70) -> float:
+def get_window_sentiment(df: pd.DataFrame, threshold: float) -> float:
     """
     Inputs:
         df: dataframe containing window of tweets to get a average sentiment
@@ -79,11 +79,16 @@ def get_windowed_tweets(
     return tweets.query(f"{year_query} and {month_query} and {day_query}")
 
 
-def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
+def aggregate_sentiment_data(
+    data: pd.DataFrame, country: Country, threshold: float
+) -> List:
     """
     Input:
         data: dataframe containing all data for one country.
         country: Country enummerator corresponding to the data.
+        threshold: threshold for the confidence score (between 0 and 1) given
+            by the classifier of the assigned sentiment. tweets that do not
+            meet this threshold will not be conssidered in the calculation.
 
     Output:
         A list of all the data, aggregated by weekly sentiment averages.
@@ -100,7 +105,7 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
     while week <= pd.Timestamp.today():
         next_week = week + pd.DateOffset(days=7)
         window_df = get_windowed_tweets(data, week, next_week)
-        score = get_window_sentiment(window_df)
+        score = get_window_sentiment(window_df, threshold=threshold)
         aggregated_data.append(
             [
                 week.strftime(time_string_format),
@@ -115,10 +120,13 @@ def aggregate_sentiment_data(data: pd.DataFrame, country: Country) -> List:
     return aggregated_data
 
 
-def get_aggregated_data() -> pd.DataFrame:
+def get_aggregated_data(threshold: float = 0.7) -> pd.DataFrame:
     """
     Output:
         A dataframe of all the countries data, aggregated by week.
+        threshold: threshold for the confidence score (between 0 and 1) given
+            by the classifier of the assigned sentiment. tweets that do not
+            meet this threshold will not be conssidered in the calculation.
     """
     # dictionary to sort loaded datasets by country
     data_by_country = {
@@ -175,7 +183,9 @@ def get_aggregated_data() -> pd.DataFrame:
             df["confidence"] = df["confidence"].astype(float)
 
             # aggregate data
-            aggregated_data_list += aggregate_sentiment_data(df, country)
+            aggregated_data_list += aggregate_sentiment_data(
+                df, country, threshold=threshold
+            )
 
     # create empty dataframe for aggregated data (used for graph)
     aggregated_data = pd.DataFrame.from_records(
